@@ -132,11 +132,18 @@ class Game:
 	
 	def _handleRadioConnectionClick(self, mousePos):
 		'''Handle mouse clicks in radio connection menu'''
-		# Connection type buttons
+		# Connection type buttons - match new layout
 		conn_types = ['BLE', 'TCP', 'Serial']
-		conn_y = 220
+		section_y = 80 + 80  # title_y + 80
+		conn_y = section_y + 50
+		conn_button_width = 140
+		conn_button_height = 45
+		conn_spacing = 20
+		total_width = len(conn_types) * conn_button_width + (len(conn_types) - 1) * conn_spacing
+		conn_start_x = (Constants.SCREEN_WIDTH - total_width) // 2
+		
 		for i, conn_type in enumerate(conn_types):
-			rect = Rect(150 + i * 120, conn_y, 100, 40)
+			rect = Rect(conn_start_x + i * (conn_button_width + conn_spacing), conn_y, conn_button_width, conn_button_height)
 			if rect.collidepoint(mousePos):
 				self.options.radioConnectionType = conn_type
 				self.options.selectedDeviceIndex = -1
@@ -164,23 +171,31 @@ class Game:
 				self.redrawNeeded = True
 				return
 		
-		# BLE device selection
+		# BLE device selection - match new layout
 		if self.options.radioConnectionType == 'BLE' and self.options.bleDevices:
-			device_y = 320
-			max_visible = 5
-			start_idx = max(0, self.options.selectedDeviceIndex - 2)
-			end_idx = min(len(self.options.bleDevices), start_idx + max_visible)
+			content_y = conn_y + conn_button_height + 40
+			list_y = content_y + 40
+			list_rect = Rect(50, list_y, Constants.SCREEN_WIDTH - 100, 200)
 			
-			for i in range(start_idx, end_idx):
-				device_rect = Rect(150, device_y + (i - start_idx) * 35, 400, 30)
-				if device_rect.collidepoint(mousePos):
-					self.options.selectedDeviceIndex = i
-					self.redrawNeeded = True
-					return
+			if list_rect.collidepoint(mousePos):
+				device_item_height = 35
+				max_visible = min(5, len(self.options.bleDevices))
+				start_idx = max(0, min(self.options.selectedDeviceIndex - 2, len(self.options.bleDevices) - max_visible))
+				end_idx = min(len(self.options.bleDevices), start_idx + max_visible)
+				
+				for i in range(start_idx, end_idx):
+					device_y = list_rect.y + 10 + (i - start_idx) * device_item_height
+					device_rect = Rect(list_rect.x + 10, device_y, list_rect.width - 20, device_item_height - 5)
+					if device_rect.collidepoint(mousePos):
+						self.options.selectedDeviceIndex = i
+						self.redrawNeeded = True
+						return
 		
-		# TCP hostname input
+		# TCP hostname input - match new layout
 		if self.options.radioConnectionType == 'TCP':
-			hostname_box = Rect(150, 320, 300, 40)
+			content_y = conn_y + conn_button_height + 40
+			label_y = content_y
+			hostname_box = Rect(Constants.SCREEN_WIDTH // 2 - 200, label_y + 40, 400, 45)
 			if hostname_box.collidepoint(mousePos):
 				self.options.tcpHostnameActive = True
 				self.options.tcpPortActive = False
@@ -189,7 +204,8 @@ class Game:
 				self.redrawNeeded = True
 				return
 			
-			port_box = Rect(150, 420, 150, 40)
+			port_label_y = label_y + 100
+			port_box = Rect(Constants.SCREEN_WIDTH // 2 - 100, port_label_y + 40, 200, 45)
 			if port_box.collidepoint(mousePos):
 				self.options.tcpPortActive = True
 				self.options.tcpHostnameActive = False
@@ -198,9 +214,11 @@ class Game:
 				self.redrawNeeded = True
 				return
 		
-		# Serial port input
+		# Serial port input - match new layout
 		if self.options.radioConnectionType == 'Serial':
-			port_box = Rect(150, 320, 300, 40)
+			content_y = conn_y + conn_button_height + 40
+			label_y = content_y
+			port_box = Rect(Constants.SCREEN_WIDTH // 2 - 200, label_y + 40, 400, 45)
 			if port_box.collidepoint(mousePos):
 				self.options.serialPortActive = True
 				if not hasattr(self.options, 'serialPortCursor'):
@@ -208,21 +226,28 @@ class Game:
 				self.redrawNeeded = True
 				return
 		
+		# Action buttons - match new layout
+		button_y = Constants.SCREEN_HEIGHT - 80
+		button_width = 160
+		button_height = 45
+		button_spacing = 20
+		
 		# Connect button
-		connect_rect = Rect(150, 540, 150, 40)
+		connect_rect = Rect((Constants.SCREEN_WIDTH - button_width * 2 - button_spacing) // 2, button_y, button_width, button_height)
 		if connect_rect.collidepoint(mousePos):
 			self._attemptRadioConnection()
 			return
 		
 		# Refresh button (BLE)
 		if self.options.radioConnectionType == 'BLE':
-			refresh_rect = Rect(320, 540, 150, 40)
+			refresh_rect = Rect(connect_rect.right + button_spacing, button_y, button_width, button_height)
 			if refresh_rect.collidepoint(mousePos):
 				self._scanBLEDevices()
 				return
 		
 		# Back button
-		back_rect = Rect(150, 600, 150, 40)
+		back_y = button_y + button_height + 15
+		back_rect = Rect((Constants.SCREEN_WIDTH - button_width) // 2, back_y, button_width, button_height)
 		if back_rect.collidepoint(mousePos):
 			self.newGameStage(STAGES.MULTIPLAYER_MENU)
 			return
@@ -692,90 +717,209 @@ class Game:
 		Frontend.markDirty(full_screen_rect)
 	def _drawRadioConnectionMenu(self):
 		'''Draw the radio connection GUI'''
-		# Title
-		Frontend.render(Frontend.FONT_ARIAL_BIG, (150, 100), 'RADIO CONNECTION')
+		mouse_pos = pygame.mouse.get_pos()
 		
-		# Connection type selection
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (150, 180), 'Connection Type:')
+		# Title - centered
+		title_y = 80
+		title_rect = Frontend.render(Frontend.FONT_ARIAL_BIG, (Constants.SCREEN_WIDTH // 2, title_y), 'RADIO CONNECTION', (0, 0, 0), fitMode='center')
+		
+		# Connection type selection - styled as tabs
+		section_y = title_y + 80
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (Constants.SCREEN_WIDTH // 2, section_y), 'Connection Type', (0, 0, 0), fitMode='center')
+		
 		conn_types = ['BLE', 'TCP', 'Serial']
-		conn_y = 220
+		conn_y = section_y + 50
+		conn_button_width = 140
+		conn_button_height = 45
+		conn_spacing = 20
+		total_width = len(conn_types) * conn_button_width + (len(conn_types) - 1) * conn_spacing
+		conn_start_x = (Constants.SCREEN_WIDTH - total_width) // 2
+		
 		for i, conn_type in enumerate(conn_types):
-			color = (0, 0, 0) if self.options.radioConnectionType == conn_type else (128, 128, 128)
-			rect = Rect(150 + i * 120, conn_y, 100, 40)
-			Frontend.render(Frontend.FONT_ARIAL_SMALL, rect, conn_type, color)
-			if rect.collidepoint(pygame.mouse.get_pos()):
-				pygame.draw.rect(Frontend.Runtime.display, (200, 200, 200), rect, 2)
+			is_selected = self.options.radioConnectionType == conn_type
+			is_hovered = False
+			rect = Rect(conn_start_x + i * (conn_button_width + conn_spacing), conn_y, conn_button_width, conn_button_height)
+			if rect.collidepoint(mouse_pos):
+				is_hovered = True
+			
+			# Button styling
+			if is_selected:
+				bg_color = (100, 150, 255)  # Blue for selected
+				text_color = (255, 255, 255)
+				border_color = (50, 100, 200)
+			elif is_hovered:
+				bg_color = (220, 220, 255)  # Light blue for hover
+				text_color = (0, 0, 0)
+				border_color = (150, 150, 200)
+			else:
+				bg_color = (240, 240, 240)  # Light grey for unselected
+				text_color = (100, 100, 100)
+				border_color = (200, 200, 200)
+			
+			# Draw button with rounded corners effect (using thicker border)
+			pygame.draw.rect(Frontend.Runtime.display, bg_color, rect, 0)
+			pygame.draw.rect(Frontend.Runtime.display, border_color, rect, 3)
+			Frontend.render(Frontend.FONT_ARIAL_MIDDLE, rect, conn_type, text_color, fitMode='center')
 		
 		# Connection-specific UI
+		content_y = conn_y + conn_button_height + 40
 		if self.options.radioConnectionType == 'BLE':
-			self._drawBLEConnectionUI()
+			self._drawBLEConnectionUI(content_y)
 		elif self.options.radioConnectionType == 'TCP':
-			self._drawTCPConnectionUI()
+			self._drawTCPConnectionUI(content_y)
 		elif self.options.radioConnectionType == 'Serial':
-			self._drawSerialConnectionUI()
+			self._drawSerialConnectionUI(content_y)
 		
-		# Status and buttons
-		status_y = 500
-		Frontend.render(Frontend.FONT_ARIAL_SMALL, (150, status_y), f'Status: {self.options.connectionStatus}', (0, 0, 0))
+		# Status message - centered, with better styling
+		status_y = Constants.SCREEN_HEIGHT - 140
+		status_bg_rect = Rect(50, status_y - 10, Constants.SCREEN_WIDTH - 100, 35)
+		status_color = (240, 240, 240)
+		if 'failed' in self.options.connectionStatus.lower() or 'error' in self.options.connectionStatus.lower():
+			status_color = (255, 240, 240)  # Light red for errors
+		elif 'connected' in self.options.connectionStatus.lower() or 'found' in self.options.connectionStatus.lower():
+			status_color = (240, 255, 240)  # Light green for success
+		pygame.draw.rect(Frontend.Runtime.display, status_color, status_bg_rect, 0)
+		pygame.draw.rect(Frontend.Runtime.display, (200, 200, 200), status_bg_rect, 2)
+		Frontend.render(Frontend.FONT_ARIAL_SMALL, status_bg_rect, f'Status: {self.options.connectionStatus}', (0, 0, 0), fitMode='center')
+		
+		# Action buttons - better positioned and styled
+		button_y = Constants.SCREEN_HEIGHT - 80
+		button_width = 160
+		button_height = 45
+		button_spacing = 20
 		
 		# Connect button
-		connect_rect = Rect(150, status_y + 40, 150, 40)
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, connect_rect, 'CONNECT', (0, 0, 0), (200, 255, 200), (0, 0, 0), 2)
+		connect_rect = Rect((Constants.SCREEN_WIDTH - button_width * 2 - button_spacing) // 2, button_y, button_width, button_height)
+		is_connect_hovered = connect_rect.collidepoint(mouse_pos)
+		connect_bg = (100, 255, 100) if is_connect_hovered else (150, 255, 150)
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, connect_rect, 'CONNECT', (0, 0, 0), connect_bg, (50, 200, 50), 3, fitMode='center')
 		
 		# Refresh button (for BLE)
 		if self.options.radioConnectionType == 'BLE':
-			refresh_rect = Rect(320, status_y + 40, 150, 40)
-			Frontend.render(Frontend.FONT_ARIAL_MIDDLE, refresh_rect, 'REFRESH', (0, 0, 0), (200, 200, 255), (0, 0, 0), 2)
+			refresh_rect = Rect(connect_rect.right + button_spacing, button_y, button_width, button_height)
+			is_refresh_hovered = refresh_rect.collidepoint(mouse_pos)
+			refresh_bg = (100, 150, 255) if is_refresh_hovered else (150, 200, 255)
+			Frontend.render(Frontend.FONT_ARIAL_MIDDLE, refresh_rect, 'REFRESH', (0, 0, 0), refresh_bg, (50, 100, 200), 3, fitMode='center')
 		
-		# Back button
-		back_rect = Rect(150, status_y + 100, 150, 40)
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, back_rect, 'BACK', (0, 0, 0), (255, 200, 200), (0, 0, 0), 2)
+		# Back button - centered below other buttons
+		back_y = button_y + button_height + 15
+		back_rect = Rect((Constants.SCREEN_WIDTH - button_width) // 2, back_y, button_width, button_height)
+		is_back_hovered = back_rect.collidepoint(mouse_pos)
+		back_bg = (255, 150, 150) if is_back_hovered else (255, 200, 200)
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, back_rect, 'BACK', (0, 0, 0), back_bg, (200, 50, 50), 3, fitMode='center')
 		
 		Frontend.Runtime._staticMenuCache = None
 	
-	def _drawBLEConnectionUI(self):
+	def _drawBLEConnectionUI(self, start_y):
 		'''Draw BLE device selection UI'''
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (150, 280), 'Available Devices:')
+		mouse_pos = pygame.mouse.get_pos()
+		
+		# Section header
+		header_y = start_y
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (Constants.SCREEN_WIDTH // 2, header_y), 'Available Devices', (0, 0, 0), fitMode='center')
+		
+		# Device list container
+		list_y = header_y + 40
+		list_height = 200
+		list_rect = Rect(50, list_y, Constants.SCREEN_WIDTH - 100, list_height)
+		pygame.draw.rect(Frontend.Runtime.display, (250, 250, 250), list_rect, 0)
+		pygame.draw.rect(Frontend.Runtime.display, (200, 200, 200), list_rect, 2)
 		
 		if not self.options.bleDevices:
-			Frontend.render(Frontend.FONT_ARIAL_SMALL, (150, 320), 'No devices found. Click Refresh to scan.', (128, 128, 128))
+			# Empty state message
+			empty_msg_rect = Rect(list_rect.x + 20, list_rect.y + list_rect.height // 2 - 15, list_rect.width - 40, 30)
+			Frontend.render(Frontend.FONT_ARIAL_SMALL, empty_msg_rect, 'No devices found. Click Refresh to scan.', (150, 150, 150), fitMode='center')
 		else:
-			device_y = 320
-			max_visible = 5
-			start_idx = max(0, self.options.selectedDeviceIndex - 2)
+			# Device list with scrolling
+			device_item_height = 35
+			max_visible = min(5, len(self.options.bleDevices))
+			start_idx = max(0, min(self.options.selectedDeviceIndex - 2, len(self.options.bleDevices) - max_visible))
 			end_idx = min(len(self.options.bleDevices), start_idx + max_visible)
 			
 			for i in range(start_idx, end_idx):
 				device = self.options.bleDevices[i]
-				device_rect = Rect(150, device_y + (i - start_idx) * 35, 400, 30)
-				color = (0, 0, 0) if i == self.options.selectedDeviceIndex else (128, 128, 128)
-				bg_color = (220, 220, 255) if i == self.options.selectedDeviceIndex else (255, 255, 255)
-				Frontend.render(Frontend.FONT_ARIAL_SMALL, device_rect, f"{device.get('name', 'Unknown')} ({device.get('address', 'N/A')})", color, bg_color, (0, 0, 0), 1)
+				device_y = list_rect.y + 10 + (i - start_idx) * device_item_height
+				device_rect = Rect(list_rect.x + 10, device_y, list_rect.width - 20, device_item_height - 5)
+				
+				is_selected = i == self.options.selectedDeviceIndex
+				is_hovered = device_rect.collidepoint(mouse_pos)
+				
+				if is_selected:
+					bg_color = (180, 200, 255)
+					text_color = (0, 0, 0)
+					border_color = (100, 150, 255)
+				elif is_hovered:
+					bg_color = (240, 240, 255)
+					text_color = (0, 0, 0)
+					border_color = (200, 200, 255)
+				else:
+					bg_color = (255, 255, 255)
+					text_color = (100, 100, 100)
+					border_color = (220, 220, 220)
+				
+				pygame.draw.rect(Frontend.Runtime.display, bg_color, device_rect, 0)
+				pygame.draw.rect(Frontend.Runtime.display, border_color, device_rect, 2)
+				
+				# Truncate long device names
+				device_name = device.get('name', 'Unknown')
+				device_addr = device.get('address', 'N/A')
+				display_text = f"{device_name} ({device_addr})"
+				if len(display_text) > 50:
+					display_text = display_text[:47] + "..."
+				
+				Frontend.render(Frontend.FONT_ARIAL_SMALL, device_rect, display_text, text_color, fitMode='midleft', boundaryPadding=8)
 	
-	def _drawTCPConnectionUI(self):
+	def _drawTCPConnectionUI(self, start_y):
 		'''Draw TCP connection input UI'''
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (150, 280), 'Hostname:')
-		hostname_box = Rect(150, 320, 300, 40)
-		hostname_text = ''.join(self.options.tcpHostname)
-		if hasattr(self.options, 'tcpHostnameActive') and self.options.tcpHostnameActive:
-			hostname_text = hostname_text[:self.options.tcpHostnameCursor] + '|' + hostname_text[self.options.tcpHostnameCursor:]
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, hostname_box, hostname_text or 'localhost', (0, 0, 0), (255, 255, 255) if (hasattr(self.options, 'tcpHostnameActive') and self.options.tcpHostnameActive) else (240, 240, 240), (0, 0, 0), 2)
+		# Hostname input
+		label_y = start_y
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (Constants.SCREEN_WIDTH // 2, label_y), 'Hostname', (0, 0, 0), fitMode='center')
 		
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (150, 380), 'Port:')
-		port_box = Rect(150, 420, 150, 40)
+		hostname_box = Rect(Constants.SCREEN_WIDTH // 2 - 200, label_y + 40, 400, 45)
+		hostname_text = ''.join(self.options.tcpHostname)
+		is_active = hasattr(self.options, 'tcpHostnameActive') and self.options.tcpHostnameActive
+		if is_active:
+			hostname_text = hostname_text[:self.options.tcpHostnameCursor] + '|' + hostname_text[self.options.tcpHostnameCursor:]
+		
+		bg_color = (255, 255, 255) if is_active else (245, 245, 245)
+		border_color = (100, 150, 255) if is_active else (200, 200, 200)
+		pygame.draw.rect(Frontend.Runtime.display, bg_color, hostname_box, 0)
+		pygame.draw.rect(Frontend.Runtime.display, border_color, hostname_box, 3)
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, hostname_box, hostname_text or 'localhost', (0, 0, 0), fitMode='midleft', boundaryPadding=10)
+		
+		# Port input
+		port_label_y = label_y + 100
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (Constants.SCREEN_WIDTH // 2, port_label_y), 'Port', (0, 0, 0), fitMode='center')
+		
+		port_box = Rect(Constants.SCREEN_WIDTH // 2 - 100, port_label_y + 40, 200, 45)
 		port_text = ''.join(self.options.tcpPort)
-		if hasattr(self.options, 'tcpPortActive') and self.options.tcpPortActive:
+		is_port_active = hasattr(self.options, 'tcpPortActive') and self.options.tcpPortActive
+		if is_port_active:
 			port_text = port_text[:self.options.tcpPortCursor] + '|' + port_text[self.options.tcpPortCursor:]
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, port_box, port_text or '5000', (0, 0, 0), (255, 255, 255) if (hasattr(self.options, 'tcpPortActive') and self.options.tcpPortActive) else (240, 240, 240), (0, 0, 0), 2)
+		
+		port_bg_color = (255, 255, 255) if is_port_active else (245, 245, 245)
+		port_border_color = (100, 150, 255) if is_port_active else (200, 200, 200)
+		pygame.draw.rect(Frontend.Runtime.display, port_bg_color, port_box, 0)
+		pygame.draw.rect(Frontend.Runtime.display, port_border_color, port_box, 3)
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, port_box, port_text or '5000', (0, 0, 0), fitMode='midleft', boundaryPadding=10)
 	
-	def _drawSerialConnectionUI(self):
+	def _drawSerialConnectionUI(self, start_y):
 		'''Draw Serial connection input UI'''
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (150, 280), 'Serial Port:')
-		port_box = Rect(150, 320, 300, 40)
+		# Serial port input
+		label_y = start_y
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, (Constants.SCREEN_WIDTH // 2, label_y), 'Serial Port', (0, 0, 0), fitMode='center')
+		
+		port_box = Rect(Constants.SCREEN_WIDTH // 2 - 200, label_y + 40, 400, 45)
 		port_text = ''.join(self.options.serialPort)
-		if hasattr(self.options, 'serialPortActive') and self.options.serialPortActive:
+		is_active = hasattr(self.options, 'serialPortActive') and self.options.serialPortActive
+		if is_active:
 			port_text = port_text[:self.options.serialPortCursor] + '|' + port_text[self.options.serialPortCursor:]
-		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, port_box, port_text or '/dev/ttyUSB0', (0, 0, 0), (255, 255, 255) if (hasattr(self.options, 'serialPortActive') and self.options.serialPortActive) else (240, 240, 240), (0, 0, 0), 2)
+		
+		bg_color = (255, 255, 255) if is_active else (245, 245, 245)
+		border_color = (100, 150, 255) if is_active else (200, 200, 200)
+		pygame.draw.rect(Frontend.Runtime.display, bg_color, port_box, 0)
+		pygame.draw.rect(Frontend.Runtime.display, border_color, port_box, 3)
+		Frontend.render(Frontend.FONT_ARIAL_MIDDLE, port_box, port_text or '/dev/ttyUSB0', (0, 0, 0), fitMode='midleft', boundaryPadding=10)
 	
 	def redrawHUD(self):
 		grid = self.grid if self.options.myGridShown else self.opponentGrid
