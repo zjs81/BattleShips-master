@@ -1,30 +1,63 @@
-# BattleShips
+# BattleShips - MeshCore Edition
 
 ## About
-BattleShips is my first attempt to make an online game. It is a copy of the pen and pencil game called BattleShips, in Czech known as 'Lodě'. 
-Currently it's work in progress.<br>
+This is a fork of [Michal-Martinek/BattleShips](https://github.com/Michal-Martinek/BattleShips), modified to work over the MeshCore network instead of traditional TCP/IP sockets.
+
+BattleShips is a copy of the pen and pencil game called BattleShips, in Czech known as 'Lodě'. This fork has been adapted to use peer-to-peer communication via MeshCore, enabling off-grid mesh networking gameplay.
+
+**Original Repository:** https://github.com/Michal-Martinek/BattleShips
+
 This is a picture of what the game looks like right now:
 ![Screenshot](Screenshot.png)
 
+## Key Changes from Original
+- **Peer-to-Peer Architecture**: Removed the central server; players communicate directly via MeshCore
+- **MeshCore Integration**: Uses `meshcore-cli` for radio communication (BLE, TCP, or Serial)
+- **Radio Connection GUI**: Added a user interface for selecting and connecting to MeshCore devices
+- **Message Chunking**: Implements automatic message chunking for MeshCore's 100-byte message size limit
+
 ## Requirements
-You need python version 3.9 or compatible and pygame installed.
-For running the game you will need to be on the same local network as the server is, but internet access is not needed.
-It should be possinble to have the server on a different network, but I haven't tested it yet.
+- Python 3.9 or compatible
+- pygame (>=2.0.0)
+- meshcore-cli (>=0.1.0)
+- A MeshCore-compatible radio device
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Or install manually:
+```bash
+pip install pygame
+pip install meshcore-cli
+# Or using pipx (recommended for meshcore-cli):
+pipx install meshcore-cli
+pip install pygame
+```
 
 ## Running
-You need to start exactly one server instance and then you can start as many clients as you wish.
-```cmd
-ServerMain.py
-BattleShips.py
-BattleShips.py
-BattleShips.py
+This version uses peer-to-peer communication, so **no server is needed**. Simply run the game on each device:
+
+```bash
+python BattleShips.py
 ```
 
-Once you start the server a message like this will pop up:
-```cmd
-INFO:root:server ready and listening at 192.168.0.159:1250
-```
-You will need to make sure that the SERVER_ADDRES constant above the Session class in [./Client/Session.py](./Client/Session.py) is the same as the server address reported in the message.
+### First-Time Setup
+1. Start the game and enter multiplayer mode
+2. Enter your player name
+3. Select your radio connection method:
+   - **BLE**: Scan and select a Bluetooth Low Energy device
+   - **TCP**: Enter hostname and port for TCP/IP connection
+   - **Serial**: Enter serial port path (e.g., `/dev/ttyUSB0`)
+4. Connect to your MeshCore device
+5. The game will automatically discover and pair with available opponents
+
+### Network Requirements
+- Players must be connected to the same MeshCore mesh network
+- For BLE: Devices must be paired and within range
+- For TCP: Players must be on the same network or have network connectivity
+- For Serial: Direct serial connection to MeshCore device
 
 ## Controls
 #### LMB
