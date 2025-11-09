@@ -1,0 +1,9 @@
+# BattleShips Game Dependencies
+# Python 3.9+ required
+
+# Game engine and graphics
+pygame>=2.0.0
+
+# MeshCore network communication
+meshcore-cli>=0.1.0
+
