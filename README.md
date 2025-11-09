@@ -14,7 +14,7 @@ This is a picture of what the game looks like right now:
 - **Peer-to-Peer Architecture**: Removed the central server; players communicate directly via MeshCore
 - **MeshCore Integration**: Uses `meshcore-cli` for radio communication (BLE, TCP, or Serial)
 - **Radio Connection GUI**: Added a user interface for selecting and connecting to MeshCore devices
-- **Message Chunking**: Implements automatic message chunking for MeshCore's 100-byte message size limit
+- **Message Chunking**: Implements automatic message chunking for MeshCore's size limit
 
 ## Requirements
 - Python 3.9 or compatible
