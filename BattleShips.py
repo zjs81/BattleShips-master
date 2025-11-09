@@ -51,6 +51,10 @@ def game():
 				# Always process mouse movement for window dragging, but skip other processing if no focus
 				if Frontend.Runtime.windowGrabbedPos or Frontend.Runtime.windowHasFocus:
 					game.mouseMovement(event)
+			elif event.type == pygame.VIDEORESIZE:
+				# Handle window resize
+				Frontend.Runtime.handleResize(event.w, event.h)
+				game.redrawNeeded = True
 			elif event.type in [pygame.WINDOWFOCUSGAINED, pygame.WINDOWFOCUSLOST, pygame.WINDOWRESTORED]:
 				Frontend.Runtime.windowHasFocus = event.type != pygame.WINDOWFOCUSLOST
 				if not Frontend.Runtime.windowHasFocus: game.options.inputActive = False

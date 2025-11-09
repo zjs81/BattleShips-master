@@ -23,6 +23,10 @@ FONT_ARIAL_BIG = pygame.font.SysFont('arial', 60)
 FONT_ARIAL_PLAYERNAME = pygame.font.SysFont('arial', 22)
 FONT_ARIAL_SMALL = pygame.font.SysFont('arial', 20)
 FONT_ARIAL17 = pygame.font.SysFont('arial', 17)
+# Larger fonts for radio connection menu readability
+FONT_ARIAL_RADIO_LARGE = pygame.font.SysFont('arial', 48)
+FONT_ARIAL_RADIO_MEDIUM = pygame.font.SysFont('arial', 32)
+FONT_ARIAL_RADIO_SMALL = pygame.font.SysFont('arial', 24)
 
 def loadImage(*paths) -> pygame.Surface:
 	path = os.path.join(GRAPHICS_DIR, *paths)
@@ -56,12 +60,19 @@ class _Runtime:
 	_staticMenuCache: pygame.Surface = None  # Cache for static menu screens
 
 	def __init__(self):
-		self.display = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), pygame.NOFRAME)
+		self.display = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), pygame.RESIZABLE | pygame.NOFRAME)
 		self.SDLwindow = Window.from_display_module()
 		self.SDLwindow.position = (self.SDLwindow.position[0], 6)
 		pygame.display.set_caption('Battleships')
 		pygame.display.set_icon(loadImage('BattleShips.ico'))
 		self.resetVars()
+	
+	def handleResize(self, width, height):
+		'''Handle window resize events'''
+		self.display = pygame.display.set_mode((width, height), pygame.RESIZABLE | pygame.NOFRAME)
+		# Mark everything as dirty to force full redraw
+		self._staticMenuCache = None
+		self._headerNeedsRedraw = True
 	def resetVars(self):
 		self.readyBtnHovered = False
 		self.readyBtnRect = None
